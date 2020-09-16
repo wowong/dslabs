@@ -1,6 +1,7 @@
 package dslabs.clientserver;
 
 import com.google.common.base.Objects;
+import dslabs.atmostonce.AMOCommand;
 import dslabs.clientserver.Reply;
 import dslabs.clientserver.Request;
 import dslabs.framework.Address;
@@ -51,7 +52,7 @@ class SimpleClient extends Node implements Client {
             throw new IllegalArgumentException();
         }
 
-        request = new Request(command, sequenceNum++);
+        request = new Request(new AMOCommand(address(), command, sequenceNum++));
         reply = null;
 
         send(request, serverAddress);
@@ -68,14 +69,14 @@ class SimpleClient extends Node implements Client {
 		while (reply == null) {
 			wait();
 		}
-		return reply.result();
+		return reply.result().result();
     }
 
     /* -------------------------------------------------------------------------
         Message Handlers
        -----------------------------------------------------------------------*/
     private synchronized void handleReply(Reply m, Address sender) {
-        if (Objects.equal(m.sequenceNum(), request.sequenceNum())) {
+        if (Objects.equal(m.result().sequenceNum(), request.command().sequenceNum())) {
             reply = m;
             notify();
         }
@@ -86,7 +87,7 @@ class SimpleClient extends Node implements Client {
        -----------------------------------------------------------------------*/
     private synchronized void onClientTimer(ClientTimer t) {
         if (request != null && Objects.equal(t.request(), request) && reply == null) {
-            request = new Request(request.command(), request.sequenceNum());
+            request = new Request(request.command());
             send(request, serverAddress);
             set(t, CLIENT_RETRY_MILLIS);
         }

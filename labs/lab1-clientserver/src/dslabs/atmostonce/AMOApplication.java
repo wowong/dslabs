@@ -1,5 +1,8 @@
 package dslabs.atmostonce;
 
+import java.util.HashMap;
+import java.util.Map;
+import dslabs.framework.Address;
 import dslabs.framework.Application;
 import dslabs.framework.Command;
 import dslabs.framework.Result;
@@ -16,7 +19,7 @@ public final class AMOApplication<T extends Application>
         implements Application {
     @Getter @NonNull private final T application;
 
-    // Your code here...
+    Map<Address, AMOResult> state = new HashMap<Address, AMOResult>();
 
     @Override
     public AMOResult execute(Command command) {
@@ -26,8 +29,14 @@ public final class AMOApplication<T extends Application>
 
         AMOCommand amoCommand = (AMOCommand) command;
 
-        // Your code here...
-        return null;
+        if (!alreadyExecuted(amoCommand)) {
+            Result result = application.execute(amoCommand.command());
+            AMOResult amoResult = new AMOResult(result, amoCommand.sequenceNum());
+            state.put(amoCommand.sender(), amoResult);
+            return amoResult;
+        }
+
+        return state.get(amoCommand.sender());
     }
 
     public Result executeReadOnly(Command command) {
@@ -43,7 +52,10 @@ public final class AMOApplication<T extends Application>
     }
 
     public boolean alreadyExecuted(AMOCommand amoCommand) {
-        // Your code here...
-        return false;
+        if (!state.containsKey(amoCommand.sender())) {
+            return false;
+        }
+
+        return state.get(amoCommand.sender()).sequenceNum() >= amoCommand.sequenceNum();
     }
 }
