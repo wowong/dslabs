@@ -8,6 +8,8 @@ import lombok.EqualsAndHashCode;
 import lombok.NonNull;
 import lombok.ToString;
 
+import java.util.HashMap;
+import java.util.Map;
 
 @ToString
 @EqualsAndHashCode
@@ -61,23 +63,37 @@ public class KVStore implements Application {
         @NonNull private final String value;
     }
 
-    // Your code here...
+    Map<String, String> store = new HashMap<String, String>();
 
     @Override
     public KVStoreResult execute(Command command) {
         if (command instanceof Get) {
             Get g = (Get) command;
-            // Your code here...
+            String key = g.key();
+
+            if (store.containsKey(key)) {
+                return new GetResult(store.get(g.key()));
+            }
+
+            return new KeyNotFound();
         }
 
         if (command instanceof Put) {
             Put p = (Put) command;
-            // Your code here...
+            store.put(p.key(), p.value());
+            
+            return new PutOk();
         }
 
         if (command instanceof Append) {
             Append a = (Append) command;
-            // Your code here...
+            
+            if (!store.containsKey(a.key())) {
+                store.put(a.key(), "");
+            }
+
+            store.put(a.key(), store.get(a.key()) + a.value());
+            return new AppendResult(store.get(a.key()));
         }
 
         throw new IllegalArgumentException();
