@@ -5,6 +5,9 @@ import dslabs.framework.Node;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import static dslabs.primarybackup.PingCheckTimer.PING_CHECK_MILLIS;
 
 @ToString(callSuper = true)
@@ -12,8 +15,10 @@ import static dslabs.primarybackup.PingCheckTimer.PING_CHECK_MILLIS;
 class ViewServer extends Node {
     static final int STARTUP_VIEWNUM = 0;
     private static final int INITIAL_VIEWNUM = 1;
-
+    
     // Your code here...
+    private final View currentView;
+    private Map<Address, int> serverStatus = new HashMap<Address, int>();
 
     /* -------------------------------------------------------------------------
         Construction and Initialization
@@ -25,7 +30,7 @@ class ViewServer extends Node {
     @Override
     public void init() {
         set(new PingCheckTimer(), PING_CHECK_MILLIS);
-        // Your code here...
+        currentView = new View(STARTUP_VIEWNUM, null, null);
     }
 
     /* -------------------------------------------------------------------------
@@ -36,7 +41,7 @@ class ViewServer extends Node {
     }
 
     private void handleGetView(GetView m, Address sender) {
-        // Your code here...
+        send(new ViewReply(currentView), sender);
     }
 
     /* -------------------------------------------------------------------------
@@ -50,5 +55,9 @@ class ViewServer extends Node {
     /* -------------------------------------------------------------------------
         Utils
        -----------------------------------------------------------------------*/
-    // Your code here...
+    private View nextView() {
+        if (currentView.viewNum() == STARTUP_VIEWNUM) {
+            
+        }
+    }
 }
